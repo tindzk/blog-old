@@ -1,0 +1,41 @@
+# Page title.
+title: tindzk's blog
+
+# Blog's description.
+descr: Just another programming blog.
+
+# Mail address and author name.
+mail:   tim.nieradzik@gmx.de
+author: Tim Nieradzik
+
+# Base URL.
+url: http://tindzk.us.to
+
+# Copyright year (shown in footer).
+copyright: 2010
+
+# Article license.
+license: Licensed under the EUPL, Version 1.1 only; You may not use this work except in compliance with the licence.
+
+# Text shown on 'About' page.
+about: My name is Tim Nieradzik. I am a 18 years old student from Bremen, Germany. My interests include programming in C, specifically software and web development. I am also interested in general programming concepts as well as code design.
+
+# Flattr user name
+flattr: tindzk
+
+# Path to directory containing the articles.
+articles: articles
+
+# Path to css/, images/ and js/.
+static: bin/blogd
+
+# External URLs. Shown in header.
+external:
+	Projects: http://tindzk.github.com/
+	GitHub:   http://github.com/tindzk
+
+# Categories (must be unique).
+categories:
+	Programming:
+		C
+	Linux

@@ -1,0 +1,205 @@
+.meta {
+	.date{2010-12-16}
+	.title{Customizing the TTY}
+	.category{Linux}
+}
+
+.descr {
+	.p{For coding purposes as well as text creation, I prefer working in a TTY 
+	running VIM and screen. This is mainly due to the lack of distractions and 
+	the possibility to benefit from a keyboard-restricted control. Moreover,
+	in TTYs the keyboard appears to be more responsive than in X11 sessions.}
+
+	.p{An ongoing issue with the Linux TTY is that the default settings are 
+	counterproductive for the use of most terminal applications, particularly 
+	for w3m and VIM.}
+
+	.p{This article discusses some of the fewer known quirks which increase the 
+	efficiency and legibility of your TTY.}
+
+	.p{Most of the tips outlined in this article require the use of the 
+	framebuffer.}
+}
+
+.section[Font] {
+	.p{The font can be changed by the command .keyword{setfont <font name>}. 
+	You can use all fonts located within .path{/usr/share/kbd/}'s 
+	subdirectories.}
+
+	.p{I've chosen Terminus, specifically .keyword{ter-112n}, which has a good 
+	coverage of most latin characters including accents and umlauts.}
+}
+
+.section[Colors] {
+	.p{Linux' default colors are difficult to read, especially on a dimmed 
+	laptop display where distinguishing blue from black becomes nearly 
+	impossible.}
+
+	.p{You can change the colours though, even without recompiling your kernel.  
+	Furthermore, the Linux terminal driver supports the full RGB colour range. 
+	The relevant files reside within .path{/sys/module/vt/parameters}:}
+
+	.list {
+		.item{.path{default_red}}
+		.item{.path{default_grn}}
+		.item{.path{default_blu}}
+	}
+
+	.p{As you may have guessed, each colour must be set in three different 
+	files. These contains the 16 default colours which are set during the 
+	creation of each new TTY. After this they can be locally overwritten using 
+	escape codes and restored by reinitializing the terminal, i.e. 
+	.keyword{reset}.}
+
+	.p{.url[http://phraktured.net/linux-console-colors.html]{This page} covers
+	changing the colours for the current using escape codes. However, this 
+	article only deals with a system-wide approach which also involves root 
+	rights.}
+
+	.p{According to the kernel documentation 
+	(.path{Documentation/kernel-parameters.txt}), the three files are composed 
+	as follows:}
+
+	.code {
+		vt.default_blu=	[VT]
+				Format: <blue0>,<blue1>,<blue2>,...,<blue15>
+				Change the default blue palette of the console.
+				This is a 16-member array composed of values
+				ranging from 0-255.
+
+		vt.default_grn=	[VT]
+				Format: <green0>,<green1>,<green2>,...,<green15>
+				Change the default green palette of the console.
+				This is a 16-member array composed of values
+				ranging from 0-255.
+
+		vt.default_red=	[VT]
+				Format: <red0>,<red1>,<red2>,...,<red15>
+				Change the default red palette of the console.
+				This is a 16-member array composed of values
+				ranging from 0-255.
+	}
+
+	.p{If you're looking for prebuilt colour schemes, 
+	.url[http://phraktured.net/terminal-colors/]{phraktured.net} is a 
+	comprehensive resource. Despite being made for xterm/URxvt, the provided 
+	schemes can be ported easily to the TTY. If you want to do so you only need 
+	.keyword{color\{0-15\}} whereas the options .keyword{background} and 
+	.keyword{foreground} cannot be set in Linux.}
+
+	.p{To speed up the conversion, you can use this PHP script which will take a 
+	color scheme and print out the proper values for the three files:}
+
+	.code {
+		<?php
+
+		$input = '
+		*color0:     rgb:00/00/00
+		*color1:     rgb:d3/62/65
+		*color2:     rgb:ae/ce/91
+		*color3:     rgb:e7/e1/8c
+		*color4:     rgb:7a/7a/b0
+		*color5:     rgb:96/3c/59
+		*color6:     rgb:41/81/79
+		*color7:     rgb:be/be/be
+		*color8:     rgb:66/66/66
+		*color9:     rgb:ef/81/71
+		*color10:    rgb:e5/f7/79
+		*color11:    rgb:ff/f7/99
+		*color12:    rgb:41/86/be
+		*color13:    rgb:ef/9e/be
+		*color14:    rgb:71/be/be
+		*color15:    rgb:ff/ff/ff
+		';
+
+		$lines = explode("\n", $input);
+
+		$default_red = '';
+		$default_grn = '';
+		$default_blu = '';
+
+		foreach ($lines as $line) \{
+			$parts = explode(':', $line);
+
+			if (!isset($parts[1])) \{
+				continue;
+			\}
+
+			$rgb = explode('/', $parts[2]);
+
+			$default_red .= '0x' . $rgb[0] . ',';
+			$default_grn .= '0x' . $rgb[1] . ',';
+			$default_blu .= '0x' . $rgb[2] . ',';
+		\}
+
+		$default_red = substr($default_red, 0, -1);
+		$default_grn = substr($default_grn, 0, -1);
+		$default_blu = substr($default_blu, 0, -1);
+
+		echo "echo $default_red > /sys/module/vt/parameters/default_red\n";
+		echo "echo $default_grn > /sys/module/vt/parameters/default_grn\n";
+		echo "echo $default_blu > /sys/module/vt/parameters/default_blu\n";
+	}
+
+	.p{As for .url[http://phraktured.net/terminal-colors/theme-four.html]{theme 
+	four} the resulting commands would be:}
+
+	.command {
+		echo 0x00,0xd3,0xae,0xe7,0x7a,0x96,0x41,0xbe,0x66,0xef,0xe5,0xff,0x41,0xef,0x71,0xff > /sys/module/vt/parameters/default_red
+		echo 0x00,0x62,0xce,0xe1,0x7a,0x3c,0x81,0xbe,0x66,0x81,0xf7,0xf7,0x86,0x9e,0xbe,0xff > /sys/module/vt/parameters/default_grn
+		echo 0x00,0x65,0x91,0x8c,0xb0,0x59,0x79,0xbe,0x66,0x71,0x79,0x96,0xbe,0xbe,0xbe,0xff > /sys/module/vt/parameters/default_blu
+
+		reset # Apply changes.
+	}
+}
+
+.section[Blinking cursor] {
+	.p{As a consequence of having a small font, it gets trickier to spot the 
+	cursor. This is particularly true for VIM where the cursor moves a lot when 
+	pressing page up/down or other navigation keys. Fortunately, you can disable 
+	the blinking very easily:}
+
+	.command {
+		echo 0 > /sys/devices/virtual/graphics/fbcon/cursor_blink
+	}
+}
+
+.section[Block cursor] {
+	.p{By default, the cursor only underlines the current character. You can 
+	change this by setting a numeric value in 
+	.path{/sys/module/vt/parameters/cur_default}. The allowed numbers are:}
+
+	.list {
+		.item{2 for underlining (.i{default})}
+		.item{1 for disabled}
+		.item{0 for block character}
+	}
+
+	.p{In practice, the block character turns out to be more productive which 
+	you can enable using this command:}
+
+	.command {
+		echo -n 0 > /sys/module/vt/parameters/cur_default
+	}
+
+	.p{The change takes effect after executing .keyword{reset}.}
+}
+
+.section[Screenshot] {
+	.p{After applying all commands, you will end up with your TTY looking like 
+	.url[/article/vt/screenshot.png]{this}.}
+}
+
+.section[Conclusion] {
+	.p{A high resolution coupled with a compact font leads to a more enjoyable 
+	work experience. It is no longer necessary to scroll as much since the space 
+	is used more effectively. By changing the default colours will lead to more 
+	legible text.}
+
+	.p{The only remaining issue is that framebuffers scroll very slowly: A 
+	simple .keyword{dmesg} call takes seconds to finish whilst software 
+	terminals render it without delay. I have noticed this issue with 
+	.keyword{radeondrmfb} as well as .keyword{inteldrmfb}. According to 
+	.url[http://gddd.wordpress.com/2009/10/08/ad/]{this page}, apparently vesafb 
+	doesn't suffer from this issue.}
+}

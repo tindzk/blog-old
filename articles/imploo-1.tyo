@@ -1,0 +1,200 @@
+.meta {
+	.date{2010-12-15}
+	.title{Implementing the OO model in any language: Terminology}
+	.category{Programming}
+	.category{C}
+}
+
+.descr {
+	.p{Writing readable and maintainable applications in C is difficult, 
+	especially when they start to grow. While experimenting with web development 
+	in C, the need for well-structured and readable code became more and more 
+	pivotal.}
+
+	.p{For the past few months I've been toying with object oriented programming 
+	in C. My aim was to achieve a simple implementation allowing to write 
+	applications in a more comfortable way.}
+
+	.p{This article is the first part of a three article series documenting how 
+	I achieved this goal. The articles are deliberately kept very generally 
+	since they are supposed to apply to any procedural language. As for the 
+	language of the example code C was chosen though.}
+
+	.p{Before diving into specifics, we need to clarify a few terms first which 
+	are used throughout my articles and projects. This article gives you a 
+	terminology defining the most important ones.}
+
+	.p{Part two will deal with some basic ideas of my implementation while part 
+	three will provide some practical information on the realization of the 
+	presented conventions.}
+}
+
+.contents {
+	.p{Although there have been many attempts to merge the OO paradigm with the 
+	C world, none of the solutions appeared to satisfy my needs. The most common 
+	reason was that the proposed solutions were either too verbose, inefficient 
+	or maintained compatibility with ancient versions of C and thus did not make 
+	full use of the potential power C and its GNU extensions could offer.}
+
+	.p{Even if you're not going to implement your own OO model and are 
+	already comfortable with the solutions your language of choice provides, 
+	you'll surely benefit from reflecting about the ideas.}
+
+	.p{OO is a programming paradigm that isn't bound to any language or syntax. 
+	While languages like Java and C++ offer syntactic sugar encouraging OO 
+	development, this doesn't mean that the concepts couldn't be ported to 
+	any procedural languages such as C.}
+
+	.p {My requirements for the implementation were the following:}
+
+	.list {
+		.item{.b{Little verbosity.} Changing a module name shouldn't involve 
+		making many changes in the class code. An early revision of my approach 
+		did not make use of macros and required writing functions in the style 
+		of .i{<return type> ClassName_MethodName(ClassName *this, <...>)}. This 
+		is quite clear as it does not change the syntax and introduces new 
+		keywords. However, maintaining such classes became troublesome very 
+		soon. Not only adding a method became a tedious job but also moving 
+		methods from one class to another did.  You heavily depended on the 
+		editor's search-and-replace skills. The obvious solution was to write 
+		some macros doing the concatenation of the class name under the hood so 
+		that you only need to write out the full function name when calling the 
+		method but not anymore for the prototype.}
+
+		.item{.b{Performance.} A common problem with many of the proposed OO 
+		implementations was that they barely used stack allocations and 
+		required the heap for nearly everything. Heap-based allocations are 
+		notoriously a lot slower and must be used with caution.}
+
+		.item{.b{Overhead.} Despite the OO model, the compiler should be 
+		still able to make optimizations and the like. Some implementations 
+		proposed to access .i{all} classes' methods utilising pointers which 
+		does make sense for calling methods of an interface 
+		(.term{itf->method(class, ...);}) but it prevents the compiler from 
+		properly optimizing the code and even imposes a lot of overhead on 
+		the structures as each instantiation of the class had to keep track 
+		of all available methods and thus leading to lots of unnecessary 
+		duplication. The cosmetic benefits do not really make up for the 
+		overhead this approach implicates.}
+	}
+
+	.p{In the process of finding the equilibrium between these requirements, a 
+	couple of .url[http://tindzk.github.com/]{projects} emerged including an 
+	.url[http://tindzk.github.com/Jivai]{alternative libc} which even introduces
+	support for exception handling. All these projects are heavily influenced 
+	by other languages, namely PHP, Python, Java, Ruby and C++.}
+}
+
+.section[Library] {
+	A .b{library} is a collection of packages which serve a common goal. An 
+	example for such a library would be a SVG parser.
+}
+
+.section[Package] {
+	A .b{package} comprises multiple components.  Sticking with the SVG example, 
+	the library would then contain the packages .i{Shape}, .i{Color}, 
+	.i{Storage} and others.  Packages pursue the sole purpose of grouping 
+	components into "categories".  Therefore, packages only appear on the 
+	directory level and, to prevent name clashes, also in the module names 
+	as a namespace (which may only consist of the packages' initials).
+}
+
+.section[Component] {
+	.p{A .b{component} is a file which contains code for the package needed to 
+	function properly. Related code is grouped in modules. A component needs to 
+	declare at least one module. If the language supports header files, like C 
+	or C++, these belong to the component as well.}
+
+	.p{To prevent that sparse modules pollute the file system, components may 
+	contain more than one module. However, it isn't necessary to put each record 
+	you declare into a separate module. A component with multiple modules is 
+	recommended when no clear distinction based upon the broader context is 
+	possible. An example for this are the two modules .i{String} and 
+	.i{StringArray} which could be put into a joint component.}
+
+	.p{The above-mentioned .i{Shape} package could implement the components 
+	.i{Line}, .i{Arc}, .i{Circle} and possibly others. As for the .i{Color} 
+	package, it might contain the components .i{RGB}, .i{RGBA} and .i{CMYK}.}
+
+	.p{A component can be anonymous. Anonymous components cannot be accessed 
+	directly. They are commonly used for abstraction. Compared to public 
+	components, anonymous ones facilitate maintenance as header files are 
+	optional. The anonymous component's modules must be made accessible by 
+	implementing at least one interface.}
+}
+
+.section[Module] {
+	A .b{module} implements a variable number of methods, constants, records and 
+	sets but can only hold up to one class.
+}
+
+.section[Class] {
+	A .b{class} encapsulates methods operating on an object as classes focus on 
+	working with the data contained in the objects. Therefore, it is discouraged 
+	to see a class as a plain record and access its members directly. If access 
+	on its members is desired, you should consider defining setter and getter 
+	methods. Alternatively, use a record instead of a class and define a method 
+	in the module operating on this particular record.
+}
+
+.section[Method] {
+	.p{A .b{method} can belong exclusively to a class or can operate on any kind 
+	of data, and thus being a static method.}
+}
+
+.section["Static"] {
+	.p{When talking about a .i{static method}, the PHP definition of a static 
+	method is meant after which it is a global function encapsulated within a 
+	class.}
+
+	.p{However, .i{static variable or function} refers to being private and 
+	hence only accessible from within the file itself. This also matches with 
+	the C definition of .i{static}.}
+}
+
+.section[Record] {
+	.p{A .b{record} encapsulates variables. It is also known as a structure in 
+	C.}
+}
+
+.section[Object] {
+	.p{An .b{object} is a record holding data which is distinct to a class. You 
+	should access it only via the class' methods. The object contains variables 
+	which, in the class context, are called .i{members}.}
+}
+
+.section[Member] {
+	.p{A .b{member} is a variable defined inside an object.  As in C, function 
+	pointers can also be used as variables and are valid within objects.}
+}
+
+.section[Interface] {
+	.p{An .b{interface} is one possible representation of a module. It can allow 
+	certain methods not to be necessarily implemented while others are 
+	compulsory.}
+
+	.p{A module can implement multiple interfaces. Interfaces may also contain 
+	variables other than function pointers such as the object size or the name 
+	of the component as a string.}
+
+	.p{It's also possible to inherit interfaces.}
+}
+
+.section[Instance] {
+	.p{An .b{instance} abstracts the object storage space. An instance can be 
+	either a pointer to an allocated object or a record/union just holding a 
+	pointer to it and nothing else. The purpose of separating the object's 
+	memory from the object itself is to enforce type safety in C.}
+}
+
+.section[Conclusion] {
+	.p{In case you want to discuss this or other articles, just drop me a mail. 
+	I'd be glad to answer your comments.}
+
+	.p{As object oriented programming is a broad area, more articles on this 
+	topic will follow. Articles porting popular design patterns to C are planned 
+	as well as articles showing how Jivai has been used in some real-life 
+	projects.}
+
+	.p{Stay tuned.}
+}
